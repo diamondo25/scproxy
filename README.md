@@ -21,6 +21,9 @@ When this works, you can launch PlayGTAV.exe and see the login screen. The conso
 - UI folder is literally taken from the Social Club install. Seems to be compatible
 
 
+## RE info
+- PlayGTAV.exe+0x32AF00 == File signing certificate public key
+
 ## TODO
 - Figure out why API calls 404
 - Try sending an outdated login response like FiveM does [here](https://github.com/citizenfx/fivem/blob/2e43e64b3a69e8778e45cf7db67f0703eee29c6f/code/components/ros-patches-five/src/LegitimacyNui.cpp#L353) (you could in theory just change desktop.html and see if it works)

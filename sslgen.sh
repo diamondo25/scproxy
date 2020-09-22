@@ -1,0 +1,2 @@
+openssl req -new -out domaincert.csr -newkey rsa:2048 -nodes -sha256 -keyout domaincert.key -config sslconfig.conf
+openssl x509 -req -days 1095 -in domaincert.csr -signkey domaincert.key -out domaincert.crt

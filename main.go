@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -29,15 +28,20 @@ func serveFile(path string) func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func quickProxy(fullUrl string) *httputil.ReverseProxy {
+	url, _ := url.Parse(fullUrl)
+	return httputil.NewSingleHostReverseProxy(url)
+}
+
 func main() {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	r := mux.NewRouter()
 
-	makeDomainProxy := func(domain string, upstream string) *mux.Router {
+	makeDomainProxy := func(domain string, upstream string, addRoutes func(r *mux.Router)) *mux.Router {
 		router := r.Host(domain).Subrouter()
-		proxyURL, _ := url.Parse(upstream)
-		router.PathPrefix("/").Handler(httputil.NewSingleHostReverseProxy(proxyURL))
+		addRoutes(router)
+		router.PathPrefix("/").Handler(quickProxy(upstream))
 
 		return router
 	}
@@ -49,8 +53,7 @@ func main() {
 	ros.HandleFunc("/scui/v2/ext/scui/"+version+"/js/common/jquery-1.7.2.min.js", serveFile("jquery-1.7.2.min.js"))
 
 	// 192.81.241.100 == prod.ros.rockstargames.com
-	remote, _ := url.Parse("http://192.81.241.100/scui/mtl/api/")
-	proxy := httputil.NewSingleHostReverseProxy(remote)
+	proxy := quickProxy("http://192.81.241.100/scui/mtl/api/")
 
 	ros.PathPrefix("/scui/v2/api/").Handler(http.StripPrefix("/scui/v2/api/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -64,42 +67,43 @@ func main() {
 		proxy.ServeHTTP(w, r)
 	})))
 
-	global, _ := url.Parse("http://192.81.241.100/")
-	globalProxy := httputil.NewSingleHostReverseProxy(global)
-
-	ros.PathPrefix("/").Handler(globalProxy)
-
 	// prod.cloud.rockstargames.com.edgekey.net
 
-	cloud := makeDomainProxy("prod.cloud.rockstargames.com", "http://prod.cloud.rockstargames.com.edgekey.net/")
-	//cloud := r.Host("prod.cloud.rockstargames.com").Subrouter()
+	makeDomainProxy("prod.cloud.rockstargames.com", "http://prod.cloud.rockstargames.com.edgekey.net/", func(r *mux.Router) {
+		globalScui := "/global/ext/scui/"
 
-	globalScui := "/global/ext/scui/"
+		r.PathPrefix(globalScui + version + "/").Handler(http.StripPrefix(globalScui+version+"/", http.FileServer(http.Dir("./UI/ext/scui/a/"))))
+		r.PathPrefix(globalScui).Handler(http.StripPrefix(globalScui, http.FileServer(http.Dir("./UI/ext/scui/"))))
+	})
 
-	cloud.PathPrefix(globalScui + version + "/").Handler(http.StripPrefix(globalScui+version+"/", http.FileServer(http.Dir("./UI/ext/scui/a/"))))
-	cloud.PathPrefix(globalScui).Handler(http.StripPrefix(globalScui, http.FileServer(http.Dir("./UI/ext/scui/"))))
+	authProd := makeDomainProxy("auth-prod.ros.rockstargames.com", "https://192.81.241.100/", func(r *mux.Router) {
 
-	authProd := makeDomainProxy("auth-prod.ros.rockstargames.com", "https://192.81.241.100/")
+	})
 	_ = authProd
 
-	log.Print("Starting server...")
-	cfg := &tls.Config{}
+	rgl := makeDomainProxy("rgl.rockstargames.com", "http://104.255.105.53/", func(r *mux.Router) {
 
-	for _, x := range []string{
-		"prod_ros_rockstargames_com",
-		"prod_cloud_rockstargames_com",
-		"ros_rockstargames_com",
-	} {
-		cert, err := tls.LoadX509KeyPair(
-			x+".crt",
-			x+".key",
-		)
-		if err != nil {
-			log.Fatal(err)
-		}
+	})
 
-		cfg.Certificates = append(cfg.Certificates, cert)
+	rglProxy := quickProxy("http://rgl.rockstargames.com/api/launcher")
+	tmp := rglProxy.Director
+	rglProxy.Director = func(r *http.Request) {
+		r.Host = "rgl.rockstargames.com"
+		r.Header.Del("Origin")
+		r.Header.Del("Referer")
+		tmp(r)
 	}
+
+	ros.PathPrefix("/scui/rgl/api/gta5").Handler(http.StripPrefix("/scui/rgl/api/gta5", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("Derp prox")
+		rglProxy.ServeHTTP(w, r)
+	})))
+
+	_ = rgl
+
+	globalProxy := quickProxy("http://192.81.241.100/")
+
+	ros.PathPrefix("/").Handler(globalProxy)
 
 	customLogger := func(protocol string) handlers.LogFormatter {
 		return func(writer io.Writer, params handlers.LogFormatterParams) {
@@ -120,35 +124,43 @@ func main() {
 		}
 	}
 
+	// Cert locations
+	// Once:  PlayGTAV.exe+32AF05
+	// Array: socialclub.dll+13A775
+
 	go func() {
+		log.Println("Starting HTTP server")
 		log.Fatal(http.ListenAndServe("127.0.0.1:80", handlers.CustomLoggingHandler(os.Stdout, r, customLogger("http"))))
 	}()
 
-	go func() {
-		// Lingering server
-		l, err := net.Listen("tcp", "127.0.0.1:443")
-		if err != nil {
-			panic(err)
-		}
-
-		for {
-			conn, err := l.Accept()
-			fmt.Println("Got a connection... but not going to do anything with it")
+	/*
+		func() {
+			// Lingering server
+			l, err := net.Listen("tcp", "127.0.0.1:443")
 			if err != nil {
 				panic(err)
 			}
 
-			_ = conn
-		}
+			for {
+				conn, err := l.Accept()
+				fmt.Println("Got a connection... but not going to do anything with it")
+				if err != nil {
+					panic(err)
+				}
 
+				_ = conn
+			}
+
+		}()
+	*/
+
+	go func() {
+
+		log.Println("Starting HTTPS server")
+		log.Fatal(http.ListenAndServeTLS("127.0.0.1:443", "domaincert.crt", "domaincert.key",
+			handlers.CustomLoggingHandler(os.Stdout, r, customLogger("https")),
+		))
 	}()
 
-
-	server := http.Server{
-		Addr:      "127.0.0.1:4433",
-		Handler:   handlers.CustomLoggingHandler(os.Stdout, r, customLogger("https")),
-		TLSConfig: cfg,
-	}
-
-	log.Fatal(server.ListenAndServeTLS("", ""))
+	select {}
 }

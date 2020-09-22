@@ -1,7 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d0050296-9d03-42ee-9f37-503c7a7d125a" name="Default Changelist" comment="" />
+    <list default="true" id="d0050296-9d03-42ee-9f37-503c7a7d125a" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/playgtav.crt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/socialclub_13A770.crt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/socialclub_13ad51.crt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/socialclub_141ed0.crt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/sslconfig.conf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/sslgen.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UI/ext/scui/a/js/common/games/gta5.js" beforeDir="false" afterPath="$PROJECT_DIR$/UI/ext/scui/a/js/common/games/gta5.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UI/ext/scui/a/js/desktop/common.js" beforeDir="false" afterPath="$PROJECT_DIR$/UI/ext/scui/a/js/desktop/common.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/desktop.html" beforeDir="false" afterPath="$PROJECT_DIR$/desktop.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prod_cloud_rockstargames_com.crt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/prod_cloud_rockstargames_com.csr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/prod_cloud_rockstargames_com.key" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/prod_ros_rockstargames_com.crt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/prod_ros_rockstargames_com.csr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/prod_ros_rockstargames_com.key" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ros_rockstargames_com.crt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ros_rockstargames_com.csr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ros_rockstargames_com.key" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -15,6 +37,9 @@
     </option>
   </component>
   <component name="GOROOT" path="C:\Users\Erwin\go\go1.15.1" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
   <component name="GoLibraries">
     <option name="indexEntireGoPath" value="false" />
   </component>
@@ -54,10 +79,18 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="1015" y="354" width="1092" height="715" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.2560.1400@0.0.2560.1400" timestamp="1599256431976" />
+    <state x="1615" y="742" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1600814445643">
+      <screen x="0" y="0" width="2560" height="1400" />
+    </state>
+    <state x="1615" y="742" key="#com.intellij.fileTypes.FileTypeChooser/0.0.2560.1400@0.0.2560.1400" timestamp="1600814445643" />
     <state x="490" y="366" key="#com.intellij.ide.util.MemberChooser" timestamp="1600254506012">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="490" y="366" key="#com.intellij.ide.util.MemberChooser/0.0.2560.1400@0.0.2560.1400" timestamp="1600254506012" />
+    <state x="451" y="227" key="CommitChangelistDialog2" timestamp="1600817214087">
+      <screen x="0" y="0" width="2560" height="1400" />
+    </state>
+    <state x="451" y="227" key="CommitChangelistDialog2/0.0.2560.1400@0.0.2560.1400" timestamp="1600817214087" />
     <state x="138" y="122" width="1094" height="1058" key="com.intellij.history.integration.ui.views.SelectionHistoryDialog" timestamp="1600253278270">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
@@ -66,9 +99,9 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="392" y="384" width="585" height="534" key="find.popup/0.0.2560.1400@0.0.2560.1400" timestamp="1600254931545" />
-    <state x="348" y="305" width="672" height="678" key="search.everywhere.popup" timestamp="1600253689929">
+    <state x="348" y="305" width="672" height="678" key="search.everywhere.popup" timestamp="1600805457433">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state x="348" y="305" width="672" height="678" key="search.everywhere.popup/0.0.2560.1400@0.0.2560.1400" timestamp="1600253689929" />
+    <state x="348" y="305" width="672" height="678" key="search.everywhere.popup/0.0.2560.1400@0.0.2560.1400" timestamp="1600805457433" />
   </component>
 </project>
