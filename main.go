@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -40,6 +41,7 @@ func main() {
 
 	makeDomainProxy := func(domain string, upstream string, addRoutes func(r *mux.Router)) *mux.Router {
 		router := r.Host(domain).Subrouter()
+
 		addRoutes(router)
 		router.PathPrefix("/").Handler(quickProxy(upstream))
 
@@ -49,7 +51,9 @@ func main() {
 	version := "15042217"
 	ros := r.Host("prod.ros.rockstargames.com").Subrouter()
 
-	ros.HandleFunc("/scui/v2/desktop", serveFile("desktop.html"))
+	ros.HandleFunc("/scui/v2/desktop", serveFile("./UI/html/desktop.html"))
+	ros.PathPrefix("/scui/v2/html/desktop/").Handler(http.StripPrefix("/scui/v2/html/desktop/", http.FileServer(http.Dir("./UI/html/desktop/"))))
+
 	ros.HandleFunc("/scui/v2/ext/scui/"+version+"/js/common/jquery-1.7.2.min.js", serveFile("jquery-1.7.2.min.js"))
 
 	// 192.81.241.100 == prod.ros.rockstargames.com
@@ -83,9 +87,25 @@ func main() {
 
 	rgl := makeDomainProxy("rgl.rockstargames.com", "http://104.255.105.53/", func(r *mux.Router) {
 
+		r.HandleFunc("/api/{whatever}/writeerrorlogfile", func(w http.ResponseWriter, r *http.Request) {
+			type data struct {
+				LogData string `json:"logData"`
+			}
+
+			d := &data{}
+			u := json.NewDecoder(r.Body)
+
+			if err := u.Decode(d); err != nil {
+				panic(err)
+			}
+
+			s, _ := url.QueryUnescape(d.LogData)
+
+			log.Println("LogData: ", s)
+		})
 	})
 
-	rglProxy := quickProxy("http://rgl.rockstargames.com/api/launcher")
+	rglProxy := quickProxy("http://rgl.rockstargames.com/api/")
 	tmp := rglProxy.Director
 	rglProxy.Director = func(r *http.Request) {
 		r.Host = "rgl.rockstargames.com"
@@ -94,7 +114,7 @@ func main() {
 		tmp(r)
 	}
 
-	ros.PathPrefix("/scui/rgl/api/gta5").Handler(http.StripPrefix("/scui/rgl/api/gta5", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ros.PathPrefix("/scui/rgl/api/").Handler(http.StripPrefix("/scui/rgl/api/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("Derp prox")
 		rglProxy.ServeHTTP(w, r)
 	})))
@@ -128,9 +148,15 @@ func main() {
 	// Once:  PlayGTAV.exe+32AF05
 	// Array: socialclub.dll+13A775
 
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+
+	handler := handlers.CORS(headersOk,originsOk, methodsOk)(r)
+
 	go func() {
 		log.Println("Starting HTTP server")
-		log.Fatal(http.ListenAndServe("127.0.0.1:80", handlers.CustomLoggingHandler(os.Stdout, r, customLogger("http"))))
+		log.Fatal(http.ListenAndServe("127.0.0.1:80", handlers.CustomLoggingHandler(os.Stdout, handler, customLogger("http"))))
 	}()
 
 	/*
@@ -158,7 +184,7 @@ func main() {
 
 		log.Println("Starting HTTPS server")
 		log.Fatal(http.ListenAndServeTLS("127.0.0.1:443", "domaincert.crt", "domaincert.key",
-			handlers.CustomLoggingHandler(os.Stdout, r, customLogger("https")),
+			handlers.CustomLoggingHandler(os.Stdout, handler, customLogger("https")),
 		))
 	}()
 

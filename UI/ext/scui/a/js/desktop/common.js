@@ -6557,7 +6557,7 @@ https://github.com/LearnBoost/antiscroll#license
         return void 0 != e && "/" == e.charAt(0) && (e = e.substr(1)), o.urlCombine(globals.apiUrl, e)
     }, o.isAjaxXml = function (e) {
         var t = e.dataTypes[0];
-        return "xml" === t || "text" === t && "application/xml" === e.accepts.text
+        return "xml" === t || "text" === t && "application/xml" === e.accepts.text || e.url.indexOf('.xml') > 0
     }, o.ConvertDateString = function (e, t) {
         var n = parseInt(e);
         1e10 > n && (n *= 1e3);
@@ -6622,7 +6622,7 @@ https://github.com/LearnBoost/antiscroll#license
         }
         return ""
     };
-    var l = !1;
+    var l = true; // log flag?
     return o.logType = {error: "error", debug: "debug"}, o.logController = {
         debug: "debug",
         friend: "friend",
@@ -6634,23 +6634,29 @@ https://github.com/LearnBoost/antiscroll#license
         mp3: "mp3",
         gta5: "gta5"
     }, o.WriteDebugLog = function (e, t, n, i, c, d) {
-        if (!a(e, t, n) && (d || !r(e, t, n))) {
+        //if (!a(e, t, n) && (d || !r(e, t, n))) {
             var u = null != e && void 0 != e && null != n && void 0 != n && (e.toString().indexOf("RGSC_SET_TEXT_BOX_HAS_FOCUS") > -1 && n.toString().indexOf('"IsPassword":true') > -1 || n.toString().search(/["']password["'] *:/gi) > -1 || n.toString().search(/["']email["'] *:/gi) > -1);
             u && (n = s(n, "text"), n = s(n, "password"), n = s(n, "email"), n = s(n, "zipcode"));
             var h = o.formatLogData(e, t, n);
+
+            o.WriteErrorLogFile(h, i, c, d)
+
             if (l ? (null != console && void 0 != console && void 0 != console.log && console.log(e + ": " + t + "=" + n), o.UpdateDebugTable(h)) : o.pubsub.trigger("debug:UpdateDebugTable", h), globals.isLog) {
                 var f = encodeURI((h.minutes + "," + h.seconds + "," + h.ms + "," + h.method + "," + h.key + "," + h.value).replace(/\"/g, "'"));
                 o.pubsub.trigger("setupEnvUtils:launcherDebugEvent", f)
             }
-            o.WriteErrorLogFile(h, i, c, d)
-        }
+        //}
     }, o.WriteDllLog = function (e, t, n, i, a) {
         "object" == typeof n && (n = JSON.stringify(n)), o.WriteDebugLog(e, t, n, i, a, !0)
     }, globals.debugLog = "", o.WriteErrorLogFile = function (t, n, i, a) {
         var r;
         i = i || o.logController.debug;
         var s = t.method;
-        "undefined" != typeof t.key && t.key.length && (s += " | " + t.key), "undefined" != typeof t.value && t.value.length && (s += ": " + t.value), !globals.logJs || n !== o.logType.error && "Error" !== t.key || (r = '{ "logData":"' + encodeURIComponent(s) + '" }', e.ajax({
+        "undefined" != typeof t.key && t.key.length && (s += " | " + t.key);
+
+        "undefined" != typeof t.value && t.value.length && (s += ": " + t.value);
+        //!globals.logJs || n !== o.logType.error && "Error" !== t.key || (
+            r = '{ "logData":"' + encodeURIComponent(s) + '" }', e.ajax({
             type: "POST",
             url: o.getApiUrl("api/" + i + "/writeerrorlogfile"),
             data: r,
@@ -6658,7 +6664,9 @@ https://github.com/LearnBoost/antiscroll#license
             dataType: "json",
             silentFail: !0,
             disableSlowMsg: !0
-        })), globals.fullLog && a && (globals.debugLog += s + "; ")
+        })
+        //)
+        globals.fullLog && a && (globals.debugLog += s + "; ")
     }, o.formatLogData = function (e, t, n) {
         var i = new Date;
         return {
@@ -10471,7 +10479,18 @@ https://github.com/LearnBoost/antiscroll#license
 
     function r(n, i) {
         var a = e(n);
-        "true" == a.find("Status").text() ? (e("#activation").removeClass("pending"), globals.account && (t.pubsub.trigger("datafunctions:LoadProfile"), e("#editAutoSignIn").prop("checked", i.AutoSignIn)), t.pubsub.trigger("dataFn:signInToGame", i)) : s(void 0, void 0, void 0, n)
+        t.WriteDebugLog("got r", "json", [n, i, a, globals.account]);
+        if ("true" == a.find("Status").text()) {
+            e("#activation").removeClass("pending")
+            if (globals.account) {
+                t.pubsub.trigger("datafunctions:LoadProfile")
+                e("#editAutoSignIn").prop("checked", i.AutoSignIn)
+            }
+            t.pubsub.trigger("dataFn:signInToGame", i)
+        }
+        else {
+            s(void 0, void 0, void 0, n);
+        }
     }
 
     function s(i, a, r, s) {
@@ -10491,7 +10510,7 @@ https://github.com/LearnBoost/antiscroll#license
             u.done(function (n) {
                 var i = e.ajax({
                     type: "POST",
-                    url: t.getApiUrl("/api/" + globals.titleName + "/bindsteamaccount"),
+                    url: t.getApiUrl("/api/launcher/bindsteamaccount"),
                     data: d,
                     headers: n,
                     services: !0,
@@ -13000,7 +13019,7 @@ https://github.com/LearnBoost/antiscroll#license
             if ("0" === n) return !1
         }
         var i = e(t.responseText),
-            r = "0" == i.find("Status").text() && "incorrect-captcha-sol" == i.find("Error").attr("code");
+            r = "false" == i.find("Status").text() && "incorrect-captcha-sol" == i.find("Error").attr("code");
         return r || (r = a.isVisible()), r
     }
 
@@ -13096,9 +13115,22 @@ https://github.com/LearnBoost/antiscroll#license
             var l, c = "/login", d = h.ajaxTimeout;
             r.isSteam() && (d = 3 * h.ajaxTimeout, l = 2 * h.slowAjaxMsgTimeout, !n || n.Email || n.Password || (c = "/autologinsteam"));
             var f, p;
-            n ? (f = '{ "platformName":"' + h.platform + '","env":"' + h.rosEnvironment + '","title":"' + h.titleName + '","version":' + h.RosTitleVersion + ',"userLogin":"' + (n.Email || "") + '","gamePlatform":"' + h.gamePlatform + '","recaptcha_challenge_field":"' + s + '", "recaptcha_response_field":"' + o + '"', p = ',"authTicket":"' + h.steamAuthTicket + '","userPassword":"' + (n.Password || "") + '", "Ticket": "' + (n.Ticket || "") + '" }') : (f = '{ "platformName":"' + h.platform + '","env":"' + h.rosEnvironment + '","title":"' + h.titleName + '","version":' + h.RosTitleVersion + ',"userLogin":"' + e("#signInEmail").val() + '","gamePlatform":"' + h.gamePlatform + '","recaptcha_challenge_field":"' + s + '", "recaptcha_response_field":"' + o + '"', p = ',"authTicket":"' + h.steamAuthTicket + '","userPassword":"' + e("#signInPassword").val() + '" }'), t.WriteDebugLog("SignInJS", "options", f), f += p, e.ajax({
+            n ? (f = '{ "platform":"' + h.platform +
+				'","env":"' + h.rosEnvironment +
+				'","appName":"' + h.titleName +
+				'","version":' + h.RosTitleVersion +
+				',"userLogin":"' + (n.Email || "") +
+				'","gamePlatform":"' + h.gamePlatform +
+				'","recaptcha_challenge_field":"' + s +
+				'", "recaptcha_response_field":"' + o + '"'
+				,
+				p = ',"authTicket":"' + h.steamAuthTicket +
+					'","userPassword":"' + (n.Password || "") +
+					'", "Ticket": "' + (n.Ticket || "") + '" }') : (f = '{ "platform":"' + h.platform + '","env":"' + h.rosEnvironment + '","appName":"' + h.titleName + '","version":' + h.RosTitleVersion + ',"userLogin":"' + e("#signInEmail").val() + '","gamePlatform":"' + h.gamePlatform +
+				'","recaptcha_challenge_field":"' + s +
+				'", "recaptcha_response_field":"' + o + '"', p = ',"authTicket":"' + h.steamAuthTicket + '","userPassword":"' + e("#signInPassword").val() + '" }'), t.WriteDebugLog("SignInJS", "options", f), f += p, e.ajax({
                 type: "POST",
-                url: t.getApiUrl("/api/" + h.titleName + c),
+                url: t.getApiUrl("/api/launcher" + c),
                 data: f,
                 contentType: "application/json; charset=utf-8",
                 timeout: d,
@@ -13120,7 +13152,7 @@ https://github.com/LearnBoost/antiscroll#license
         }
     }, u.OnSuccessSignIn = function (n, s, l, c) {
         var d = e(n), f = d.find("Email").text();
-        if ("1" != d.find("Status").text()) return void u.HandleSignInError(l, d.find("Error"), c);
+        if ("true" != d.find("Status").text()) return void u.HandleSignInError(l, d.find("Error"), c);
         if ("gta5" == h.titleName && 0 == e("#onlineStatsLink").length) {
             var p = e("#statsPanel .sideMenu #statsLink2").parent();
             e('<li><a id="onlineStatsLink" href="#"><i></i><span>' + i.getText("OnlineStatistics", "HomeSignin") + "</span></a></li>").insertAfter(p)
@@ -13240,7 +13272,7 @@ https://github.com/LearnBoost/antiscroll#license
     }, u.GetUserNetworks = function (n, a, r, s) {
         t.WriteDebugLog("GetUserNetworks", "rockstarId", n);
         var o = {},
-            l = '{ "env":"' + h.rosEnvironment + '","title":"' + h.titleName + '","version":' + h.RosTitleVersion + ',"rockstarId":"' + n + '","email":"' + a + '","nickname":"' + r + '" }',
+            l = '{ "env":"' + h.rosEnvironment + '","appName":"' + h.titleName + '","version":' + h.RosTitleVersion + ',"rockstarId":"' + n + '","email":"' + a + '","nickname":"' + r + '" }',
             c = i.GetAuthHeaderAsync();
         return c.done(function (n) {
             e.ajax({
@@ -16001,7 +16033,7 @@ https://github.com/LearnBoost/antiscroll#license
 }(jQuery), define("common/jquery.visible", function () {
 }), define("common/jquery.datafunctions.friends", ["jquery", "underscore", "utils", "jquery.setup.environment.utils", "common/jquery.datafunctions", "common/profile/profile-views", "common/modals/modal-views", "common/analyticsManager", "jquery.localize", "moment", "spinner", "common/jquery.visible"], function (e, t, n, i, a, r, s, o) {
     function l(t, i, a) {
-        var r = '{ "playerTicket":"' + i + '","env":"' + globals.rosEnvironment + '","title":"' + globals.titleName + '","version":' + globals.RosTitleVersion + ',"rockstarId":"' + a + '" }';
+        var r = '{ "playerTicket":"' + i + '","env":"' + globals.rosEnvironment + '","appName":"' + globals.titleName + '","version":' + globals.RosTitleVersion + ',"rockstarId":"' + a + '" }';
         return e.ajax({
             type: "POST",
             url: n.getApiUrl("/api/friend/getnickname"),
@@ -16021,7 +16053,7 @@ https://github.com/LearnBoost/antiscroll#license
         e("#findFriendsIntro").hide(), e("#friendSearchTerm").show().find("span.purple").html(t), e("#friendsPanel .loadingMask").addClass("noMask"), i.setUpLoadingPanel("#friendsPanel", function () {
             e("#findFriends .emptyContainer").remove()
         }), n.WriteDebugLog("FindPlayer", "searchTerm", t), e("#findFriendsList").data("pageIndex", a), n.WriteDebugLog("FindPlayer", "pageIndex", e("#friendSearchbox").data("pageIndex"));
-        var r = '{ "env":"' + globals.rosEnvironment + '","title":"' + globals.titleName + '","version":' + globals.RosTitleVersion + ',"searchNickname":"' + t + '","pageIndex":"' + a + '" }',
+        var r = '{ "env":"' + globals.rosEnvironment + '","appName":"' + globals.titleName + '","version":' + globals.RosTitleVersion + ',"searchNickname":"' + t + '","pageIndex":"' + a + '" }',
             s = {PlayerListType: 99, PageIndex: a, Players: []};
         n.WriteDebugLog("FindPlayer", "options", r);
         var o = i.GetAuthHeaderAsync();
@@ -19294,13 +19326,14 @@ https://github.com/LearnBoost/antiscroll#license
                 if ("timeout" == s) d = "timeout", i.WriteDebugLog("Ajax Error", "Reason", "Request timed out."), o = i.errorCode("1001"); else {
                     var u, h = n.responseText;
                     try {
+                    	l += '??? ' + JSON.stringify(r);
                         u = i.isAjaxXml(r) ? jQuery.xml2json(h) : jQuery.parseJSON(h), void 0 != u ? o = u.Message : (l += "; resp", "string" == typeof h && h.length && (h.length > 50 && (h = h.substr(0, 47) + "..."), c += "; " + h))
                     } catch (f) {
                     }
                 }
                 if ("undefined" != typeof d && d.length && (l += "; reason", c += "; " + d), "undefined" != typeof o && o.length && (l += "; errorCode", c += "; " + o), "undefined" != typeof s && s.length && (l += "; exception", c += "; " + s), i.WriteDebugLog("Ajax Error", l, c, i.logType.error, i.logController[globals.titleName]), o == i.errorCode("3003") && (void 0 == t("body").data("AjaxRetry") || t("body").data("AjaxRetry") != r.url)) return t("body").data("AjaxRetry", r.url), void i.pubsub.trigger("datafnfriends:timeOutRetryClick", r);
                 var p = a.getErrorWithCode(o, r.requestDescription);
-                if (i.WriteDebugLog("Ajax Error", o, p.Message), "timeout" != s || void 0 != r.noRetryModal && r.noRetryModal) {
+                if (i.WriteDebugLog("Ajax Error", o, p.Message, r), "timeout" != s || void 0 != r.noRetryModal && r.noRetryModal) {
                     var m = {
                         errorCode: o,
                         message: p.Message,
